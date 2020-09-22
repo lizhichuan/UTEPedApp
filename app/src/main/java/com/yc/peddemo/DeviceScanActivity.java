@@ -56,7 +56,7 @@ public class DeviceScanActivity extends ListActivity implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		getActionBar().setTitle(R.string.app_name);
+//		getActionBar().setTitle(R.string.app_name);
 		// GBUtils gbUtils = GBUtils.getInstance();
 		// String[] body=
 		// {"中文全字库","粤语全字庫","英语Full font","丹麦语Fuld font","德语Vollständiger Schrift","西班牙completo de fuente","法语police complète",

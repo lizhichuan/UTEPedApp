@@ -67,7 +67,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:launchMode="singleTask"
-        android:theme="@android:style/Theme.Holo.Light">
+        android:theme="@android:style/Theme.Holo.Light.NoActionBar">
         <activity
             android:name=".CommonWebviewActivity"
             android:launchMode="singleTask"></activity>
