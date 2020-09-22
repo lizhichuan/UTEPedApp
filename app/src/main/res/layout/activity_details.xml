@@ -1,0 +1,42 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setting_bg_color"
+    android:orientation="vertical" >
+
+    <Button
+        android:id="@+id/btn_refresh"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/refresh" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="15dp" >
+
+        <ListView
+            android:id="@+id/xListView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:cacheColorHint="#00000000"
+            android:divider="#8084daeb"
+            android:dividerHeight="0.2dip"
+            android:headerDividersEnabled="false"
+            android:scrollbars="none" >
+        </ListView>
+
+			<!--         <TextView
+            android:id="@+id/sports_details_nodata"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="@string/the_movement_did_not_meet"
+            android:textColor="@color/white"
+            android:textSize="30dp"
+            android:visibility="visible" />
+ 			-->  
+   </RelativeLayout>
+
+</LinearLayout>
