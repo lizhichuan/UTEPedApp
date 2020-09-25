@@ -64,6 +64,10 @@ import com.yc.pedometer.utils.CalendarUtils;
 import com.yc.pedometer.utils.GetFunctionList;
 import com.yc.pedometer.utils.GlobalVariable;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -73,7 +77,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         ICallback, ServiceStatusCallback, OnServerCallbackListener {
     private WebView webView;
 
-    private TextView connect_status, rssi_tv, tv_steps, tv_distance,
+    private TextView rssi_tv, tv_steps, tv_distance,
             tv_calorie, tv_sleep, tv_deep, tv_light, tv_awake, show_result,
             tv_rate, tv_lowest_rate, tv_verage_rate, tv_highest_rate;
     private EditText et_height, et_weight, et_sedentary_period;
@@ -187,9 +191,10 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         mBluetoothLeService = mBLEServiceOperate.getBleService();
         if (mBluetoothLeService != null) {
             mBluetoothLeService.setICallback(this);
-
         }
-
+        Intent intent = getIntent();
+        mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
+        mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
         mRegisterReceiver();
         mfindViewById();
         mWriteCommand = WriteCommandToBLE.getInstance(mContext);
@@ -199,9 +204,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         mUpdates.setOnServerCallbackListener(this);
         Log.d("onServerDiscorver", "MainActivity_onCreate   mUpdates  ="
                 + mUpdates);
-        Intent intent = getIntent();
-        mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
-        mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+
 
         mBLEServiceOperate.connect(mDeviceAddress);
 
@@ -209,7 +212,6 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         upDateTodaySwimData();
         upDateTodaySkipData();
     }
-
 
     private void mRegisterReceiver() {
         IntentFilter mFilter = new IntentFilter();
@@ -223,7 +225,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         et_height = (EditText) findViewById(R.id.et_height);
         et_weight = (EditText) findViewById(R.id.et_weight);
         et_sedentary_period = (EditText) findViewById(R.id.et_sedentary_period);
-        connect_status = (TextView) findViewById(R.id.connect_status);
+//        connect_status = (TextView) findViewById(R.id.connect_status);
         rssi_tv = (TextView) findViewById(R.id.rssi_tv);
         tv_steps = (TextView) findViewById(R.id.tv_steps);
         tv_distance = (TextView) findViewById(R.id.tv_distance);
@@ -337,7 +339,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
 
         setWebView(CommonWebviewActivity.this, webView);
         webView.addJavascriptInterface(new MyJavascriptInterface(this), "injectedObject");
-        webView.loadUrl("https://prog.njcool.cn/running_h5/#/");
+        webView.loadUrl("https://prog.njcool.cn/running_h5/#/?macAddress=" + mDeviceAddress);
     }
 
     /**
@@ -360,7 +362,6 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
                 mWalkCalories = info.getWalkCalories();
                 mWalkDistance = info.getWalkDistance();
                 mWalkDurationTime = info.getWalkDurationTime();
-
             }
             Log.d("onStepHandler", "mSteps =" + mSteps + ",mDistance ="
                     + mDistance + ",mCalories =" + mCalories + ",mRunSteps ="
@@ -370,9 +371,8 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
                     + ",mWalkCalories =" + mWalkCalories + ",mWalkDistance ="
                     + mWalkDistance + ",mWalkDurationTime ="
                     + mWalkDurationTime);
-
+            webView.loadUrl("javascript:updateTodaySteps('" + mSteps + "')");
             mHandler.sendEmptyMessage(UPDATE_STEP_UI_MSG);
-
         }
     };
     /**
@@ -393,8 +393,10 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
 
 //        // 无参数调用
 //        webView.loadUrl("javascript:javacalljs()");
-//// 传递参数调用
-//        webView.loadUrl("javascript:javacalljswithargs('" + "android传入到网页里的数据，有参" + "')");
+// 传递参数调用
+        getOneDayRateinfo(CalendarUtils.getCalendar(0));
+//        upDateTodayStepData();
+        webView.loadUrl("javascript:updateCurrentRate('" + rate + "')");
     }
 
     //currentRate + "," + lowestValue + "," + averageValue + "," + highestValue
@@ -402,8 +404,8 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         System.out.println("updateTodayRate=" + rate);
         // 无参数调用
 //        webView.loadUrl("javascript:javacalljs()");
-//// 传递参数调用
-//        webView.loadUrl("javascript:javacalljswithargs('" + "android传入到网页里的数据，有参" + "')");
+// 传递参数调用
+        //  webView.loadUrl("javascript:javacalljswithargs('" + "android传入到网页里的数据，有参" + "')");
     }
 
     private RateChangeListener mOnRateListener = new RateChangeListener() {
@@ -431,15 +433,16 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case RATE_SYNC_FINISH_MSG:
-                    UpdateUpdataRateMainUI(CalendarUtils.getCalendar(0));
-                    Toast.makeText(mContext, "Rate sync finish", 0).show();
+                    UpdateUpdataRateMainUI(CalendarUtils.getCalendar(-1));
+//                    Toast.makeText(mContext, "Rate sync finish", 0).show();
                     break;
                 case UPDATA_REAL_RATE_MSG:
                     tv_rate.setText(tempRate + "");// 实时跳变
                     updateCurrentRate(tempRate + "");
+                    btn_sync_rate.performClick();
                     if (tempStatus == GlobalVariable.RATE_TEST_FINISH) {
-                        UpdateUpdataRateMainUI(CalendarUtils.getCalendar(0));
-                        Toast.makeText(mContext, "Rate test finish", 0).show();
+                        UpdateUpdataRateMainUI(CalendarUtils.getCalendar(-1));
+//                        Toast.makeText(mContext, "Rate test finish", 0).show();
                     }
                     break;
                 case GlobalVariable.GET_RSSI_MSG:
@@ -507,7 +510,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
                             .show();
                     break;
                 case DISCONNECT_MSG:
-                    connect_status.setText(getString(R.string.disconnect));
+//                    connect_status.setText(getString(R.string.disconnect));
                     CURRENT_STATUS = DISCONNECTED;
                     Toast.makeText(mContext, "disconnect or connect falie", 0)
                             .show();
@@ -521,7 +524,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
 
                     break;
                 case CONNECTED_MSG:
-                    connect_status.setText(getString(R.string.connected));
+//                    connect_status.setText(getString(R.string.connected));
                     mBluetoothLeService.setRssiHandler(mHandler);
                     new Thread(new Runnable() {
                         @Override
@@ -730,21 +733,60 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
      */
     private void getOneDayRateinfo(String calendar) {
         // UTESQLOperate mySQLOperate = UTESQLOperate.getInstance(mContext);
+        List<RateOneDayInfo> mRateLastDayInfoList = mySQLOperate
+                .queryRateOneDayDetailInfo(CalendarUtils.getCalendar(-1));
         List<RateOneDayInfo> mRateOneDayInfoList = mySQLOperate
                 .queryRateOneDayDetailInfo(calendar);
+        JSONArray json = new JSONArray();
+        if (mRateLastDayInfoList != null && mRateLastDayInfoList.size() > 0) {
+            int size = mRateLastDayInfoList.size();
+            int[] rateValue = new int[size];
+            int[] timeArray = new int[size];
+
+            for (int i = 0; i < size; i++) {
+                rateValue[i] = mRateLastDayInfoList.get(i).getRate();
+                timeArray[i] = mRateLastDayInfoList.get(i).getTime();
+                Log.d(TAG, "rateValue[" + i + "]=" + rateValue[i]
+                        + "timeArray[" + i + "]=" + timeArray[i]);
+                try {
+                    JSONObject jo = new JSONObject();
+                    jo.put("date", CalendarUtils.getCalendar(-1));
+                    jo.put("rateValue", rateValue[i]);
+                    jo.put("timeArray", timeArray[i]);
+                    json.put(jo);
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        } else {
+
+        }
         if (mRateOneDayInfoList != null && mRateOneDayInfoList.size() > 0) {
             int size = mRateOneDayInfoList.size();
             int[] rateValue = new int[size];
             int[] timeArray = new int[size];
+
             for (int i = 0; i < size; i++) {
                 rateValue[i] = mRateOneDayInfoList.get(i).getRate();
                 timeArray[i] = mRateOneDayInfoList.get(i).getTime();
                 Log.d(TAG, "rateValue[" + i + "]=" + rateValue[i]
                         + "timeArray[" + i + "]=" + timeArray[i]);
+                try {
+                    JSONObject jo = new JSONObject();
+                    jo.put("date", CalendarUtils.getCalendar(0));
+                    jo.put("rateValue", rateValue[i]);
+                    jo.put("timeArray", timeArray[i]);
+                    json.put(jo);
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
+
         } else {
 
         }
+        webView.loadUrl("javascript:updateOneDayRate('" + json + "')");
     }
 
     private void startProgressDialog() {
@@ -853,11 +895,11 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         super.onResume();
         boolean ble_connecte = sp.getBoolean(GlobalVariable.BLE_CONNECTED_SP,
                 false);
-        if (ble_connecte) {
-            connect_status.setText(getString(R.string.connected));
-        } else {
-            connect_status.setText(getString(R.string.disconnect));
-        }
+//        if (ble_connecte) {
+//            connect_status.setText(getString(R.string.connected));
+//        } else {
+//            connect_status.setText(getString(R.string.disconnect));
+//        }
         JudgeNewDayWhenResume();
 
     }
@@ -2476,6 +2518,13 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
             skip_count.setText(mSkipInfo.getCount() + "");
             skip_calorie.setText(mSkipInfo.getCalories() + "");
         }
+    }
+
+    private void upDateTodayStepData() {
+        // TODO Auto-generated method stub
+        int steps = mySQLOperate.queryStepDate(CalendarUtils
+                .getCalendar(-1));// 传入日期，0为今天，-1为昨天，-2为前天。。。。
+        webView.loadUrl("javascript:updateTodaySteps('" + steps + "')");
     }
 
     @Override
