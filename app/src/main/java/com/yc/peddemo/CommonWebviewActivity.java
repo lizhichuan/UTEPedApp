@@ -25,6 +25,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
+import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -342,6 +343,28 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
         webView.loadUrl("https://prog.njcool.cn/running_h5/#/?macAddress=" + mDeviceAddress);
     }
 
+    class MyJavascriptInterface {
+        private Context context;
+
+        public MyJavascriptInterface(Context context) {
+            this.context = context;
+        }
+
+        /**
+         * 前端代码嵌入js：
+         * imageClick 名应和js函数方法名一致
+         *
+         * @param src 图片的链接
+         */
+        @JavascriptInterface
+        public void existReSelectDevice(String src) {
+            Log.e("imageClick", "-退出重新连接");
+            CoolSPUtil.insertDataToLoacl(context, "mDeviceName", "");
+            CoolSPUtil.insertDataToLoacl(context, "mDeviceAddress", "");
+            finish();
+        }
+    }
+
     /**
      * 计步监听 在这里更新UI
      */
@@ -545,6 +568,8 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
                     CURRENT_STATUS = CONNECTED;
                     Toast.makeText(mContext, "connected", 0).show();
                     btn_rate_start.performClick();
+                    CoolSPUtil.insertDataToLoacl(CommonWebviewActivity.this, "mDeviceName", mDeviceName);
+                    CoolSPUtil.insertDataToLoacl(CommonWebviewActivity.this, "mDeviceAddress", mDeviceAddress);
                     break;
 
                 case GlobalVariable.UPDATE_BLE_PROGRESS_MSG: // (新) 增加固件升级进度
@@ -754,7 +779,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
                     jo.put("rateValue", rateValue[i]);
                     jo.put("timeArray", timeArray[i]);
                     json.put(jo);
-                }catch (JSONException e) {
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
@@ -778,7 +803,7 @@ public class CommonWebviewActivity extends Activity implements View.OnClickListe
                     jo.put("rateValue", rateValue[i]);
                     jo.put("timeArray", timeArray[i]);
                     json.put(jo);
-                }catch (JSONException e) {
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }

@@ -23,6 +23,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -226,6 +227,17 @@ public class DeviceScanActivity extends ListActivity implements
                 if (device.getName() != null && device.getName().contains("M30")) {
                     mLeDevices.add(device);
                 }
+            }
+            if (TextUtils.equals(CoolSPUtil.getDataFromLoacl(DeviceScanActivity.this, "mDeviceName"), device.getName())
+                    && TextUtils.equals(CoolSPUtil.getDataFromLoacl(DeviceScanActivity.this, "mDeviceAddress"), device.getAddress())) {
+                final Intent intent = new Intent(DeviceScanActivity.this, CommonWebviewActivity.class);
+                intent.putExtra(CommonWebviewActivity.EXTRAS_DEVICE_NAME, device.getName());
+                intent.putExtra(CommonWebviewActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+                if (mScanning) {
+                    mBLEServiceOperate.stopLeScan();
+                    mScanning = false;
+                }
+                startActivity(intent);
             }
         }
 
